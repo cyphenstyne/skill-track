@@ -11,11 +11,11 @@ import FollowUps from "./pages/FollowUps";
 import NonPlacement from "./pages/NonPlacement";
 function App() {
   const [activePage, setActivePage] = useState("Dashboard");
-  const [selectedTrainee, setSelectedTrainee] = useState(null);
+  const [selectedTraineeId, setSelectedTraineeId] = useState(null);
 
   const handlePageChange = (page) => {
     setActivePage(page);
-    setSelectedTrainee(null);
+    setSelectedTraineeId(null);
   };
 
   return (
@@ -36,18 +36,18 @@ function App() {
     <Dashboard />
   )}
 
-  {activePage === "Trainees" && !selectedTrainee && (
+  {activePage === "Trainees" && !selectedTraineeId && (
     <Trainees
-      onViewTrainee={(trainee) => {
-        setSelectedTrainee(trainee);
+      onViewTrainee={(id) => {
+        setSelectedTraineeId(id);
       }}
     />
   )}
 
-  {activePage === "Trainees" && selectedTrainee && (
+  {activePage === "Trainees" && selectedTraineeId && (
     <TraineeProfile
-      trainee={selectedTrainee}
-      onBack={() => setSelectedTrainee(null)}
+      traineeId={selectedTraineeId}
+      onBack={() => setSelectedTraineeId(null)}
     />
   )}
 

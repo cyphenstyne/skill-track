@@ -1,100 +1,75 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Users, Eye, CheckCircle2, XCircle } from "lucide-react";
-
-const trainees = [
-  {
-    id: 1,
-    name: "Aarav Sharma",
-    qualification: "10th",
-    district: "Mumbai",
-    phone: "9876543210",
-    consent: true,
-  },
-  {
-    id: 2,
-    name: "Priya Patil",
-    qualification: "12th",
-    district: "Pune",
-    phone: "9876543211",
-    consent: true,
-  },
-  {
-    id: 3,
-    name: "Rahul Deshmukh",
-    qualification: "Diploma",
-    district: "Nagpur",
-    phone: "9876543212",
-    consent: true,
-  },
-  {
-    id: 4,
-    name: "Sneha Kulkarni",
-    qualification: "Bachelor's",
-    district: "Nashik",
-    phone: "9876543213",
-    consent: true,
-  },
-  {
-    id: 5,
-    name: "Rohan Joshi",
-    qualification: "Master's",
-    district: "Thane",
-    phone: "9876543214",
-    consent: false,
-  },
-  {
-    id: 6,
-    name: "Ananya Patil",
-    qualification: "Bachelor's",
-    district: "Aurangabad",
-    phone: "9876543215",
-    consent: true,
-  },
-  {
-    id: 7,
-    name: "Vikram Pawar",
-    qualification: "12th",
-    district: "Kolhapur",
-    phone: "9876543216",
-    consent: true,
-  },
-  {
-    id: 8,
-    name: "Neha Shinde",
-    qualification: "Diploma",
-    district: "Navi Mumbai",
-    phone: "9876543217",
-    consent: true,
-  },
-];
-
-const districts = [
-  "All Districts",
-  "Mumbai",
-  "Pune",
-  "Nagpur",
-  "Nashik",
-  "Thane",
-  "Aurangabad",
-  "Kolhapur",
-  "Navi Mumbai",
-];
+import { fetchApi } from "../api";
 
 function Trainees({ onViewTrainee }) {
+  const [trainees, setTrainees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [district, setDistrict] = useState("All Districts");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadTrainees() {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchApi("/trainees");
+        if (isMounted) {
+          setTrainees(data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || "An error occurred while fetching trainees.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadTrainees();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-700">
+        <p className="font-semibold">Failed to load data</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    );
+  }
+
+  const uniqueDistricts = Array.from(
+    new Set(trainees.map((item) => item.district).filter(Boolean))
+  ).sort();
+
+  const districts = ["All Districts", ...uniqueDistricts];
 
   const filteredTrainees = trainees.filter((trainee) => {
     const searchValue = search.toLowerCase().trim();
 
     const matchesSearch =
-      trainee.name.toLowerCase().includes(searchValue) ||
-      trainee.phone.includes(searchValue) ||
-      trainee.qualification.toLowerCase().includes(searchValue);
+      (trainee.name || "").toLowerCase().includes(searchValue) ||
+      (trainee.qualification || "").toLowerCase().includes(searchValue);
 
     const matchesDistrict =
-      district === "All Districts" ||
-      trainee.district === district;
+      district === "All Districts" || trainee.district === district;
 
     return matchesSearch && matchesDistrict;
   });
@@ -125,7 +100,7 @@ function Trainees({ onViewTrainee }) {
             </p>
 
             <p className="text-3xl font-bold text-slate-900 mt-2">
-              500
+              {trainees.length}
             </p>
           </div>
 
@@ -151,7 +126,7 @@ function Trainees({ onViewTrainee }) {
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name, phone or qualification..."
+                placeholder="Search by name or qualification..."
                 className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
               />
             </div>
@@ -202,10 +177,6 @@ function Trainees({ onViewTrainee }) {
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Phone
-                </th>
-
-                <th className="text-left px-6 py-4 font-semibold text-slate-600">
                   Consent
                 </th>
 
@@ -225,7 +196,7 @@ function Trainees({ onViewTrainee }) {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-semibold">
-                          {trainee.name.charAt(0)}
+                          {trainee.name ? trainee.name.charAt(0) : "T"}
                         </div>
 
                         <span className="font-semibold text-slate-800">
@@ -239,15 +210,11 @@ function Trainees({ onViewTrainee }) {
                     </td>
 
                     <td className="px-6 py-4 text-slate-600">
-                      {trainee.district}
-                    </td>
-
-                    <td className="px-6 py-4 text-slate-600">
-                      {trainee.phone}
+                      {trainee.district || "—"}
                     </td>
 
                     <td className="px-6 py-4">
-                      {trainee.consent ? (
+                      {(trainee.consentStatus ?? trainee.consent) ? (
                         <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 font-medium">
                           <CheckCircle2 size={14} />
                           Granted
@@ -262,7 +229,7 @@ function Trainees({ onViewTrainee }) {
 
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => onViewTrainee(trainee)}
+                        onClick={() => onViewTrainee(trainee.id)}
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium transition"
                       >
                         <Eye size={16} />
@@ -274,7 +241,7 @@ function Trainees({ onViewTrainee }) {
               ) : (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="5"
                     className="px-6 py-12 text-center text-slate-500"
                   >
                     No trainees found matching your search or district.

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   GraduationCap,
   Building2,
@@ -6,203 +6,90 @@ import {
   Search,
   CheckCircle2,
 } from "lucide-react";
-
-const providers = [
-  {
-    id: 1,
-    name: "Maharashtra Digital Skills Centre",
-    type: "Government",
-  },
-  {
-    id: 2,
-    name: "TechPath Training Institute",
-    type: "Private",
-  },
-  {
-    id: 3,
-    name: "SkillBridge Academy",
-    type: "Private",
-  },
-  {
-    id: 4,
-    name: "MahaSkill Development Centre",
-    type: "Government",
-  },
-  {
-    id: 5,
-    name: "FutureTech Academy",
-    type: "Private",
-  },
-  {
-    id: 6,
-    name: "Digital Maharashtra Institute",
-    type: "Government",
-  },
-  {
-    id: 7,
-    name: "NextGen Skills Hub",
-    type: "Private",
-  },
-  {
-    id: 8,
-    name: "CareerReady Institute",
-    type: "Private",
-  },
-  {
-    id: 9,
-    name: "Maharashtra IT Skills Centre",
-    type: "Government",
-  },
-  {
-    id: 10,
-    name: "Udyam Skill Development Centre",
-    type: "Government",
-  },
-];
-
-const courses = [
-  {
-    id: 1,
-    name: "Full Stack Web Development",
-    category: "IT",
-    duration: 24,
-    level: "Intermediate",
-  },
-  {
-    id: 2,
-    name: "Java Programming",
-    category: "IT",
-    duration: 16,
-    level: "Beginner",
-  },
-  {
-    id: 3,
-    name: "React Web Development",
-    category: "IT",
-    duration: 16,
-    level: "Intermediate",
-  },
-  {
-    id: 4,
-    name: "Python Development",
-    category: "IT",
-    duration: 20,
-    level: "Intermediate",
-  },
-  {
-    id: 5,
-    name: "Data Analytics",
-    category: "Data",
-    duration: 20,
-    level: "Intermediate",
-  },
-  {
-    id: 6,
-    name: "Cloud Computing Fundamentals",
-    category: "Cloud",
-    duration: 16,
-    level: "Intermediate",
-  },
-  {
-    id: 7,
-    name: "Digital Marketing",
-    category: "Marketing",
-    duration: 12,
-    level: "Beginner",
-  },
-  {
-    id: 8,
-    name: "Graphic Design",
-    category: "Design",
-    duration: 16,
-    level: "Beginner",
-  },
-  {
-    id: 9,
-    name: "DevOps Engineering",
-    category: "IT",
-    duration: 24,
-    level: "Advanced",
-  },
-  {
-    id: 10,
-    name: "Cybersecurity Fundamentals",
-    category: "Security",
-    duration: 20,
-    level: "Intermediate",
-  },
-  {
-    id: 11,
-    name: "AWS Cloud Practitioner",
-    category: "Cloud",
-    duration: 12,
-    level: "Beginner",
-  },
-  {
-    id: 12,
-    name: "Database Administration",
-    category: "IT",
-    duration: 16,
-    level: "Intermediate",
-  },
-  {
-    id: 13,
-    name: "Android Development",
-    category: "Mobile",
-    duration: 20,
-    level: "Intermediate",
-  },
-  {
-    id: 14,
-    name: "UI/UX Design",
-    category: "Design",
-    duration: 16,
-    level: "Beginner",
-  },
-  {
-    id: 15,
-    name: "Machine Learning Fundamentals",
-    category: "AI",
-    duration: 24,
-    level: "Advanced",
-  },
-  {
-    id: 16,
-    name: "Entrepreneurship & Small Business",
-    category: "Business",
-    duration: 12,
-    level: "Beginner",
-  },
-];
-
-const categories = [
-  "All Categories",
-  "IT",
-  "Data",
-  "Cloud",
-  "Marketing",
-  "Design",
-  "Security",
-  "Mobile",
-  "AI",
-  "Business",
-];
+import { fetchApi } from "../api";
 
 function Training() {
+  const [providers, setProviders] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All Categories");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadData() {
+      try {
+        setLoading(true);
+        setError(null);
+        const [providersData, coursesData] = await Promise.all([
+          fetchApi("/dashboard/providers"),
+          fetchApi("/dashboard/courses"),
+        ]);
+        if (isMounted) {
+          setProviders(providersData);
+          setCourses(coursesData);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || "Failed to load training data");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-700">
+        <p className="font-semibold">Failed to load data</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    );
+  }
+
+  const totalEnrolled = courses.reduce((sum, c) => sum + (c.enrolled || 0), 0);
+  const totalCompleted = courses.reduce((sum, c) => sum + (c.completed || 0), 0);
+  const completionPercentage =
+    totalEnrolled > 0
+      ? `${Math.round((totalCompleted / totalEnrolled) * 100)}%`
+      : "0%";
+
+  const uniqueCategories = Array.from(
+    new Set(courses.map((c) => c.category).filter(Boolean))
+  ).sort();
+
+  const categories = ["All Categories", ...uniqueCategories];
 
   const filteredCourses = courses.filter((course) => {
     const searchValue = search.toLowerCase().trim();
 
     const matchesSearch =
-      course.name.toLowerCase().includes(searchValue) ||
-      course.category.toLowerCase().includes(searchValue) ||
-      course.level.toLowerCase().includes(searchValue);
+      (course.name || "").toLowerCase().includes(searchValue) ||
+      (course.category || "").toLowerCase().includes(searchValue) ||
+      (course.level || "").toLowerCase().includes(searchValue) ||
+      (course.providerName || "").toLowerCase().includes(searchValue);
 
     const matchesCategory =
-      category === "All Categories" ||
-      course.category === category;
+      category === "All Categories" || course.category === category;
 
     return matchesSearch && matchesCategory;
   });
@@ -234,7 +121,7 @@ function Training() {
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
-                10
+                {providers.length}
               </p>
             </div>
 
@@ -252,7 +139,7 @@ function Training() {
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
-                16
+                {courses.length}
               </p>
             </div>
 
@@ -270,7 +157,7 @@ function Training() {
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
-                80%
+                {completionPercentage}
               </p>
             </div>
 
@@ -295,19 +182,26 @@ function Training() {
           {providers.map((provider) => (
             <div
               key={provider.id}
-              className="bg-white border border-blue-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition"
+              className="bg-white border border-blue-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between"
             >
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-                <Building2 size={19} />
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                  <Building2 size={19} />
+                </div>
+
+                <h3 className="font-semibold text-slate-900">
+                  {provider.name}
+                </h3>
+
+                <p className="text-sm text-slate-500 mt-1">
+                  {provider.providerType}
+                </p>
               </div>
 
-              <h3 className="font-semibold text-slate-900">
-                {provider.name}
-              </h3>
-
-              <p className="text-sm text-slate-500 mt-2">
-                {provider.type}
-              </p>
+              <div className="flex items-center justify-between text-xs text-slate-500 mt-4 pt-3 border-t border-slate-100">
+                <span>{provider.courses} {provider.courses === 1 ? "course" : "courses"}</span>
+                <span>{provider.trainees} {provider.trainees === 1 ? "trainee" : "trainees"}</span>
+              </div>
             </div>
           ))}
         </div>
@@ -386,11 +280,27 @@ function Training() {
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Duration
+                  Provider
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
                   Level
+                </th>
+
+                <th className="text-left px-6 py-4 font-semibold text-slate-600">
+                  Enrolled
+                </th>
+
+                <th className="text-left px-6 py-4 font-semibold text-slate-600">
+                  Completed
+                </th>
+
+                <th className="text-left px-6 py-4 font-semibold text-slate-600">
+                  In Progress
+                </th>
+
+                <th className="text-left px-6 py-4 font-semibold text-slate-600">
+                  Dropped
                 </th>
               </tr>
             </thead>
@@ -421,18 +331,34 @@ function Training() {
                     </td>
 
                     <td className="px-6 py-4 text-slate-600">
-                      {course.duration} weeks
+                      {course.providerName}
                     </td>
 
                     <td className="px-6 py-4 text-slate-600">
                       {course.level}
+                    </td>
+
+                    <td className="px-6 py-4 font-medium text-slate-800">
+                      {course.enrolled ?? 0}
+                    </td>
+
+                    <td className="px-6 py-4 font-medium text-emerald-600">
+                      {course.completed ?? 0}
+                    </td>
+
+                    <td className="px-6 py-4 font-medium text-blue-600">
+                      {course.inProgress ?? 0}
+                    </td>
+
+                    <td className="px-6 py-4 font-medium text-rose-500">
+                      {course.dropped ?? 0}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td
-                    colSpan="4"
+                    colSpan="8"
                     className="px-6 py-12 text-center text-slate-500"
                   >
                     No courses found matching your search or category.

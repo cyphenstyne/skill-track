@@ -1,131 +1,70 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertCircle,
   Search,
   Users,
-  MapPin,
   GraduationCap,
 } from "lucide-react";
-
-const nonPlacementRecords = [
-  {
-    id: 1,
-    trainee: "Vikram Pawar",
-    district: "Pune",
-    reason: "Lack of required skills",
-    reportedAt: "2026-08-05",
-  },
-  {
-    id: 2,
-    trainee: "Neha Shinde",
-    district: "Mumbai",
-    reason: "No suitable jobs nearby",
-    reportedAt: "2026-08-07",
-  },
-  {
-    id: 3,
-    trainee: "Amit Jadhav",
-    district: "Nagpur",
-    reason: "Salary too low",
-    reportedAt: "2026-08-09",
-  },
-  {
-    id: 4,
-    trainee: "Pooja More",
-    district: "Nashik",
-    reason: "Relocation required",
-    reportedAt: "2026-08-11",
-  },
-  {
-    id: 5,
-    trainee: "Karan Patil",
-    district: "Thane",
-    reason: "Family responsibilities",
-    reportedAt: "2026-08-13",
-  },
-  {
-    id: 6,
-    trainee: "Snehal Joshi",
-    district: "Kolhapur",
-    reason: "Pursuing higher education",
-    reportedAt: "2026-08-15",
-  },
-  {
-    id: 7,
-    trainee: "Aditya Kulkarni",
-    district: "Aurangabad",
-    reason: "Still searching",
-    reportedAt: "2026-08-17",
-  },
-  {
-    id: 8,
-    trainee: "Riya Deshmukh",
-    district: "Navi Mumbai",
-    reason: "Personal reasons",
-    reportedAt: "2026-08-19",
-  },
-];
-
-const reasons = [
-  "All Reasons",
-  "Lack of required skills",
-  "No suitable jobs nearby",
-  "Salary too low",
-  "Relocation required",
-  "Family responsibilities",
-  "Pursuing higher education",
-  "Still searching",
-  "Personal reasons",
-];
-
-const districts = [
-  "All Districts",
-  "Mumbai",
-  "Pune",
-  "Nagpur",
-  "Nashik",
-  "Thane",
-  "Aurangabad",
-  "Kolhapur",
-  "Navi Mumbai",
-];
+import { fetchApi } from "../api";
 
 function NonPlacement() {
+  const [nonPlacement, setNonPlacement] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
-  const [reason, setReason] = useState("All Reasons");
-  const [district, setDistrict] = useState("All Districts");
 
-  const filteredRecords = nonPlacementRecords.filter((item) => {
-    const searchValue = search.toLowerCase().trim();
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        setError(null);
 
-    const matchesSearch =
-      item.trainee.toLowerCase().includes(searchValue) ||
-      item.district.toLowerCase().includes(searchValue) ||
-      item.reason.toLowerCase().includes(searchValue);
+        const [nonPlacementData, summaryData] = await Promise.all([
+          fetchApi("/dashboard/non-placement"),
+          fetchApi("/dashboard/summary"),
+        ]);
 
-    const matchesReason =
-      reason === "All Reasons" ||
-      item.reason === reason;
+        setNonPlacement(nonPlacementData || []);
+        setSummary(summaryData || null);
+      } catch (err) {
+        setError(err.message || "Failed to load data");
+      } finally {
+        setLoading(false);
+      }
+    }
 
-    const matchesDistrict =
-      district === "All Districts" ||
-      item.district === district;
+    loadData();
+  }, []);
 
+  if (loading) {
     return (
-      matchesSearch &&
-      matchesReason &&
-      matchesDistrict
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
     );
-  });
+  }
 
-  const reasonCounts = reasons
-    .filter((item) => item !== "All Reasons")
-    .map((item) => ({
-      reason: item,
-      count: nonPlacementRecords.filter(
-        (record) => record.reason === item
-      ).length,
-    }));
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-700">
+        <p className="font-semibold">Failed to load data</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    );
+  }
+
+  const totalReports = nonPlacement.reduce(
+    (sum, item) => sum + (Number(item.count) || 0),
+    0
+  );
+  const reportedReasonsCount = nonPlacement.length;
+  const traineesWithoutPlacement = summary?.unemployedTrainees ?? 0;
+
+  const filteredRecords = nonPlacement.filter((item) => {
+    const searchValue = search.toLowerCase().trim();
+    return !searchValue || item.reason.toLowerCase().includes(searchValue);
+  });
 
   return (
     <div className="space-y-8">
@@ -154,7 +93,7 @@ function NonPlacement() {
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
-                50
+                {totalReports}
               </p>
             </div>
 
@@ -172,7 +111,7 @@ function NonPlacement() {
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
-                8
+                {reportedReasonsCount}
               </p>
             </div>
 
@@ -190,7 +129,7 @@ function NonPlacement() {
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
-                50
+                {traineesWithoutPlacement}
               </p>
             </div>
 
@@ -220,9 +159,9 @@ function NonPlacement() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {reasonCounts.map((item) => (
+          {nonPlacement.map((item) => (
             <div
-              key={item.reason}
+              key={item.id || item.reason}
               className="border border-slate-200 rounded-xl p-4 hover:border-blue-200 hover:bg-blue-50/30 transition"
             >
               <p className="text-sm font-medium text-slate-700">
@@ -235,7 +174,7 @@ function NonPlacement() {
                 </p>
 
                 <span className="text-xs text-slate-400">
-                  displayed
+                  trainees
                 </span>
               </div>
             </div>
@@ -258,9 +197,9 @@ function NonPlacement() {
             </div>
 
             {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {/* Search */}
-              <div className="relative">
+              <div className="relative flex-1 max-w-md">
                 <Search
                   size={18}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -272,40 +211,10 @@ function NonPlacement() {
                   onChange={(event) =>
                     setSearch(event.target.value)
                   }
-                  placeholder="Search trainee or reason..."
+                  placeholder="Search reason..."
                   className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
                 />
               </div>
-
-              {/* Reason */}
-              <select
-                value={reason}
-                onChange={(event) =>
-                  setReason(event.target.value)
-                }
-                className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
-              >
-                {reasons.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-
-              {/* District */}
-              <select
-                value={district}
-                onChange={(event) =>
-                  setDistrict(event.target.value)
-                }
-                className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
-              >
-                {districts.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <div className="text-sm text-slate-500">
@@ -315,9 +224,9 @@ function NonPlacement() {
               </span>{" "}
               of{" "}
               <span className="font-semibold text-slate-800">
-                {nonPlacementRecords.length}
+                {nonPlacement.length}
               </span>{" "}
-              displayed records
+              reasons
             </div>
           </div>
         </div>
@@ -328,19 +237,11 @@ function NonPlacement() {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Trainee
+                  Reason
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  District
-                </th>
-
-                <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Non-placement Reason
-                </th>
-
-                <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Reported At
+                  Count
                 </th>
               </tr>
             </thead>
@@ -349,43 +250,26 @@ function NonPlacement() {
               {filteredRecords.length > 0 ? (
                 filteredRecords.map((item) => (
                   <tr
-                    key={item.id}
+                    key={item.id || item.reason}
                     className="border-b border-slate-100 last:border-0 hover:bg-blue-50/40 transition"
                   >
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-semibold">
-                          {item.trainee.charAt(0)}
-                        </div>
-
-                        <span className="font-semibold text-slate-800">
-                          {item.trainee}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 text-slate-600">
-                      <span className="inline-flex items-center gap-2">
-                        <MapPin size={15} />
-                        {item.district}
+                      <span className="font-semibold text-slate-800">
+                        {item.reason}
                       </span>
                     </td>
 
                     <td className="px-6 py-4">
                       <span className="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 font-medium">
-                        {item.reason}
+                        {item.count}
                       </span>
-                    </td>
-
-                    <td className="px-6 py-4 text-slate-600">
-                      {item.reportedAt}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td
-                    colSpan="4"
+                    colSpan="2"
                     className="px-6 py-12 text-center text-slate-500"
                   >
                     No non-placement records match the selected filters.
