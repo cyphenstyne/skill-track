@@ -18,7 +18,7 @@ function Header({ activePage }) {
 
         <div className="hidden sm:block">
           <p className="text-xs font-semibold text-[#243552]">
-            SkillPulse
+            SkillTrack
           </p>
 
           <p className="text-[10px] text-[#8794A9]">

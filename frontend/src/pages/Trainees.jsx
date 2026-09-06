@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Search, Users, Eye, CheckCircle2, XCircle } from "lucide-react";
 import { fetchApi } from "../api";
+import Pagination from "../components/Pagination";
+import { paginate, PAGE_SIZE } from "../utils/pagination";
 
 function Trainees({ onViewTrainee }) {
   const [trainees, setTrainees] = useState([]);
@@ -8,6 +10,7 @@ function Trainees({ onViewTrainee }) {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [district, setDistrict] = useState("All Districts");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let isMounted = true;
@@ -74,6 +77,10 @@ function Trainees({ onViewTrainee }) {
     return matchesSearch && matchesDistrict;
   });
 
+  // Client-side pagination: backend GET /trainees returns the full list
+  // (no server pagination), so slice here. Reset to page 1 on filter change.
+  const { items: pagedTrainees, totalPages } = paginate(filteredTrainees, page, PAGE_SIZE);
+
   return (
     <div className="space-y-8">
       {/* Heading */}
@@ -125,7 +132,10 @@ function Trainees({ onViewTrainee }) {
               <input
                 type="text"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(1);
+                }}
                 placeholder="Search by name or qualification..."
                 className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
               />
@@ -134,7 +144,10 @@ function Trainees({ onViewTrainee }) {
             {/* District */}
             <select
               value={district}
-              onChange={(event) => setDistrict(event.target.value)}
+              onChange={(event) => {
+                setDistrict(event.target.value);
+                setPage(1);
+              }}
               className="md:w-56 px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
             >
               {districts.map((item) => (
@@ -187,8 +200,8 @@ function Trainees({ onViewTrainee }) {
             </thead>
 
             <tbody>
-              {filteredTrainees.length > 0 ? (
-                filteredTrainees.map((trainee) => (
+              {pagedTrainees.length > 0 ? (
+                pagedTrainees.map((trainee) => (
                   <tr
                     key={trainee.id}
                     className="border-b border-slate-100 last:border-0 hover:bg-blue-50/40 transition"
@@ -251,6 +264,13 @@ function Trainees({ onViewTrainee }) {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={filteredTrainees.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   );

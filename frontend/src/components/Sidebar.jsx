@@ -30,7 +30,7 @@ function Sidebar({ activePage, setActivePage }) {
 
           <div>
             <h1 className="font-bold text-[#14213D] tracking-tight">
-              SkillPulse
+              SkillTrack
             </h1>
 
             <p className="text-[11px] text-[#71809A]">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import Dashboard from "./pages/Dashboard";
@@ -9,9 +9,25 @@ import Skills from "./pages/Skills";
 import Employment from "./pages/Employment";
 import FollowUps from "./pages/FollowUps";
 import NonPlacement from "./pages/NonPlacement";
+import { fetchApi } from "./api";
 function App() {
   const [activePage, setActivePage] = useState("Dashboard");
   const [selectedTraineeId, setSelectedTraineeId] = useState(null);
+  const [backendDown, setBackendDown] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchApi("/health")
+      .then(() => {
+        if (isMounted) setBackendDown(false);
+      })
+      .catch(() => {
+        if (isMounted) setBackendDown(true);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handlePageChange = (page) => {
     setActivePage(page);
@@ -29,6 +45,15 @@ function App() {
       <main className="flex-1 min-w-0">
 
         <Header activePage={activePage} />
+
+        {backendDown && (
+          <div className="mx-8 mt-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4 text-sm text-red-700">
+            <span className="font-semibold">Backend unreachable.</span> Start it with{" "}
+            <code className="font-mono">npm run dev</code> in{" "}
+            <code className="font-mono">backend/</code> (expects port 5000, proxied via
+            /api).
+          </div>
+        )}
 
         <section className="p-8">
 
@@ -78,7 +103,7 @@ function App() {
 ].includes(activePage) && (
     <div className="bg-white border border-blue-100 rounded-2xl p-8 shadow-sm">
       <p className="text-sm font-medium text-blue-600">
-        SkillPulse
+        SkillTrack
       </p>
 
       <h1 className="text-2xl font-bold text-slate-900 mt-1">

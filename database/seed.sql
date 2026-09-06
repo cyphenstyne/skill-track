@@ -96,7 +96,33 @@ VALUES
     ('Figma',               'Design'),
     ('UI Design',           'Design'),
     ('Digital Marketing',   'Marketing'),
-    ('Cybersecurity',       'Security');
+    ('Cybersecurity',       'Security'),
+    ('C++',                 'Programming'),
+    ('Go',                  'Programming'),
+    ('Rust',                'Programming'),
+    ('Vue.js',               'Frontend'),
+    ('Angular',              'Frontend'),
+    ('Tailwind CSS',         'Frontend'),
+    ('Django',               'Backend'),
+    ('Flask',                'Backend'),
+    ('GraphQL',              'Backend'),
+    ('Flutter',              'Mobile'),
+    ('Kotlin',               'Mobile'),
+    ('Swift',                'Mobile'),
+    ('Google Cloud Platform','Cloud'),
+    ('Ansible',              'DevOps'),
+    ('Jenkins',              'DevOps'),
+    ('Networking',           'Systems'),
+    ('Bash Scripting',       'Systems'),
+    ('Tableau',              'Data'),
+    ('R',                    'Data'),
+    ('Deep Learning',        'AI'),
+    ('Natural Language Processing', 'AI'),
+    ('Penetration Testing',  'Security'),
+    ('Selenium',             'Testing'),
+    ('Jest',                 'Testing'),
+    ('Communication',        'Soft Skills'),
+    ('Problem Solving',      'Soft Skills');
 
 
 -- ============================================================
@@ -112,28 +138,23 @@ INSERT INTO trainees (
     consent_status
 )
 SELECT
-    CASE (n % 20)
-        WHEN 0 THEN 'Aarav Sharma ' || n
-        WHEN 1 THEN 'Priya Patil ' || n
-        WHEN 2 THEN 'Rahul Deshmukh ' || n
-        WHEN 3 THEN 'Sneha Kulkarni ' || n
-        WHEN 4 THEN 'Aditya Joshi ' || n
-        WHEN 5 THEN 'Ananya More ' || n
-        WHEN 6 THEN 'Rohan Pawar ' || n
-        WHEN 7 THEN 'Neha Jadhav ' || n
-        WHEN 8 THEN 'Vivek Shinde ' || n
-        WHEN 9 THEN 'Pooja Chavan ' || n
-        WHEN 10 THEN 'Siddharth Bhosale ' || n
-        WHEN 11 THEN 'Isha Gaikwad ' || n
-        WHEN 12 THEN 'Kunal Mane ' || n
-        WHEN 13 THEN 'Riya Kadam ' || n
-        WHEN 14 THEN 'Akash Wagh ' || n
-        WHEN 15 THEN 'Meera Sawant ' || n
-        WHEN 16 THEN 'Nikhil Pawar ' || n
-        WHEN 17 THEN 'Kavya Shinde ' || n
-        WHEN 18 THEN 'Yash Patil ' || n
-        ELSE 'Tanvi Deshmukh ' || n
-    END,
+    (ARRAY[
+        'Aarav','Priya','Rahul','Sneha','Aditya','Ananya','Rohan','Neha',
+        'Vivek','Pooja','Siddharth','Isha','Kunal','Riya','Akash','Meera',
+        'Nikhil','Kavya','Yash','Tanvi','Arjun','Diya','Kabir','Anika',
+        'Vihaan','Saanvi','Reyansh','Myra','Ira','Vivaan','Anaya','Advait',
+        'Aadhya','Dhruv','Kiara','Ishaan','Navya','Yuvraj','Prisha','Rudra',
+        'Anvi','Krish','Zara','Aryan','Tara','Veer','Nisha','Arnav',
+        'Ridhima','Sanjay'
+    ])[1 + ((n - 1) % 50)]
+    || ' ' ||
+    (ARRAY[
+        'Sharma','Patil','Deshmukh','Kulkarni','Joshi','More','Pawar',
+        'Jadhav','Shinde','Chavan','Bhosale','Gaikwad','Mane','Kadam',
+        'Wagh','Sawant','Nair','Reddy','Iyer','Menon','Gupta','Verma',
+        'Singh','Khan','Chatterjee','Banerjee','Mukherjee','Das','Bose',
+        'Agarwal'
+    ])[1 + (((n - 1) / 50) % 30)],
 
     DATE '1995-01-01' + ((n * 37) % 6000),
 
@@ -158,7 +179,7 @@ SELECT
         ELSE TRUE
     END
 
-FROM generate_series(1, 500) AS n;
+FROM generate_series(1, 1500) AS n;
 
 
 -- ============================================================
@@ -353,7 +374,7 @@ SELECT
         ELSE NOW() - ((n % 300) || ' days')::INTERVAL
     END
 
-FROM generate_series(1, 150) AS n;
+FROM generate_series(1, 400) AS n;
 
 
 -- ============================================================
@@ -378,7 +399,7 @@ SELECT
     CASE
         WHEN t.id % 20 >= 14
         THEN NULL
-        ELSE 1 + ((t.id - 1) % 150)
+        ELSE 1 + ((t.id - 1) % 400)
     END,
 
     CASE
@@ -438,7 +459,7 @@ SELECT
 
 FROM trainees t
 
-WHERE t.id <= 450;
+WHERE t.id <= 1350;
 
 
 -- ============================================================
@@ -595,10 +616,10 @@ INSERT INTO trainee_non_placement (
 SELECT
     t.id,
 
-    1 + ((t.id - 451) % 8),
+    1 + ((t.id - 1351) % 8),
 
     CURRENT_DATE - ((t.id % 180)::INTEGER)
 
 FROM trainees t
 
-WHERE t.id > 450;
+WHERE t.id > 1350;

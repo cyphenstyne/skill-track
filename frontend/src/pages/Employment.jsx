@@ -6,6 +6,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { fetchApi } from "../api";
+import Pagination from "../components/Pagination";
+import { paginate, PAGE_SIZE } from "../utils/pagination";
 
 function Employment() {
   const [employmentData, setEmploymentData] = useState([]);
@@ -19,6 +21,7 @@ function Employment() {
   const [role, setRole] = useState("All Roles");
   const [district, setDistrict] = useState("All Districts");
   const [growth, setGrowth] = useState("All Growth");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let isMounted = true;
@@ -195,6 +198,10 @@ function Employment() {
     });
   }, [wageRecords, search, role, district, growth]);
 
+  // Client-side pagination: GET /dashboard/wages returns all employment
+  // records at once (backend has no server pagination), so slice here.
+  const { items: pagedRecords, totalPages } = paginate(filteredRecords, page, PAGE_SIZE);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -324,9 +331,10 @@ function Employment() {
                 <input
                   type="text"
                   value={search}
-                  onChange={(event) =>
-                    setSearch(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setPage(1);
+                  }}
                   placeholder="Search trainee, role, district..."
                   className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
                 />
@@ -335,7 +343,10 @@ function Employment() {
               {/* Role */}
               <select
                 value={role}
-                onChange={(event) => setRole(event.target.value)}
+                onChange={(event) => {
+                  setRole(event.target.value);
+                  setPage(1);
+                }}
                 className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
               >
                 {availableRoles.map((item) => (
@@ -348,9 +359,10 @@ function Employment() {
               {/* District */}
               <select
                 value={district}
-                onChange={(event) =>
-                  setDistrict(event.target.value)
-                }
+                onChange={(event) => {
+                  setDistrict(event.target.value);
+                  setPage(1);
+                }}
                 className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
               >
                 {availableDistricts.map((item) => (
@@ -363,9 +375,10 @@ function Employment() {
               {/* Growth */}
               <select
                 value={growth}
-                onChange={(event) =>
-                  setGrowth(event.target.value)
-                }
+                onChange={(event) => {
+                  setGrowth(event.target.value);
+                  setPage(1);
+                }}
                 className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
               >
                 {growthOptions.map((item) => (
@@ -422,8 +435,8 @@ function Employment() {
             </thead>
 
             <tbody>
-              {filteredRecords.length > 0 ? (
-                filteredRecords.map((record) => (
+              {pagedRecords.length > 0 ? (
+                pagedRecords.map((record) => (
                   <tr
                     key={record.id}
                     className="border-b border-slate-100 last:border-0 hover:bg-blue-50/40 transition"
@@ -497,6 +510,13 @@ function Employment() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={filteredRecords.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Salary */}
