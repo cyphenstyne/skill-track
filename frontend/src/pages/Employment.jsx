@@ -1,147 +1,216 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   BriefcaseBusiness,
   Search,
-  CheckCircle2,
-  Clock3,
   IndianRupee,
+  TrendingUp,
 } from "lucide-react";
-
-const employmentRecords = [
-  {
-    id: 1,
-    trainee: "Aarav Sharma",
-    employer: "TechNova Solutions",
-    role: "Junior Developer",
-    type: "Employment",
-    status: "Active",
-    verification: "Verified",
-    relevance: "Relevant",
-  },
-  {
-    id: 2,
-    trainee: "Priya Patil",
-    employer: "MahaTech Services",
-    role: "Web Developer",
-    type: "Employment",
-    status: "Active",
-    verification: "Verified",
-    relevance: "Relevant",
-  },
-  {
-    id: 3,
-    trainee: "Rahul Deshmukh",
-    employer: "Independent",
-    role: "Freelance Developer",
-    type: "Self-employment",
-    status: "Active",
-    verification: "Verified",
-    relevance: "Relevant",
-  },
-  {
-    id: 4,
-    trainee: "Sneha Kulkarni",
-    employer: "FutureTech Systems",
-    role: "Software Trainee",
-    type: "Apprenticeship",
-    status: "Active",
-    verification: "Verified",
-    relevance: "Relevant",
-  },
-  {
-    id: 5,
-    trainee: "Rohan Joshi",
-    employer: "TechWorks Pvt Ltd",
-    role: "Support Executive",
-    type: "Employment",
-    status: "Inactive",
-    verification: "Unverified",
-    relevance: "Not relevant",
-  },
-  {
-    id: 6,
-    trainee: "Ananya Patil",
-    employer: "Digital Maharashtra",
-    role: "Frontend Developer",
-    type: "Employment",
-    status: "Active",
-    verification: "Verified",
-    relevance: "Relevant",
-  },
-  {
-    id: 7,
-    trainee: "Vikram Pawar",
-    employer: "Independent",
-    role: "Small Business Owner",
-    type: "Self-employment",
-    status: "Active",
-    verification: "Unverified",
-    relevance: "Relevant",
-  },
-  {
-    id: 8,
-    trainee: "Neha Shinde",
-    employer: "Not placed",
-    role: "-",
-    type: "Employment",
-    status: "Unemployed",
-    verification: "Unverified",
-    relevance: "Not relevant",
-  },
-];
-
-const types = [
-  "All Types",
-  "Employment",
-  "Self-employment",
-  "Apprenticeship",
-];
-
-const statuses = [
-  "All Statuses",
-  "Active",
-  "Inactive",
-  "Unemployed",
-];
-
-const verificationStatuses = [
-  "All Verification",
-  "Verified",
-  "Unverified",
-];
+import { fetchApi } from "../api";
 
 function Employment() {
+  const [employmentData, setEmploymentData] = useState([]);
+  const [wagesData, setWagesData] = useState([]);
+  const [summaryData, setSummaryData] = useState(null);
+  const [traineesData, setTraineesData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [search, setSearch] = useState("");
-  const [type, setType] = useState("All Types");
-  const [status, setStatus] = useState("All Statuses");
-  const [verification, setVerification] =
-    useState("All Verification");
+  const [role, setRole] = useState("All Roles");
+  const [district, setDistrict] = useState("All Districts");
+  const [growth, setGrowth] = useState("All Growth");
 
-  const filteredRecords = employmentRecords.filter((record) => {
-    const searchValue = search.toLowerCase().trim();
+  useEffect(() => {
+    let isMounted = true;
 
-    const matchesSearch =
-      record.trainee.toLowerCase().includes(searchValue) ||
-      record.employer.toLowerCase().includes(searchValue) ||
-      record.role.toLowerCase().includes(searchValue);
+    async function loadData() {
+      try {
+        setLoading(true);
+        setError(null);
 
-    const matchesType =
-      type === "All Types" || record.type === type;
+        const [employmentRes, wagesRes, summaryRes, traineesRes] =
+          await Promise.all([
+            fetchApi("/dashboard/employment"),
+            fetchApi("/dashboard/wages"),
+            fetchApi("/dashboard/summary"),
+            fetchApi("/trainees"),
+          ]);
 
-    const matchesStatus =
-      status === "All Statuses" || record.status === status;
+        if (isMounted) {
+          setEmploymentData(employmentRes || []);
+          setWagesData(wagesRes || []);
+          setSummaryData(summaryRes || null);
+          setTraineesData(traineesRes || []);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || "Failed to load data");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
 
-    const matchesVerification =
-      verification === "All Verification" ||
-      record.verification === verification;
+    loadData();
 
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Summary card counts from /dashboard/employment
+  const employmentCount =
+    employmentData.find(
+      (item) => item.employmentType?.toLowerCase() === "employment"
+    )?.count || 0;
+
+  const selfEmploymentCount =
+    employmentData.find(
+      (item) => item.employmentType?.toLowerCase() === "self-employment"
+    )?.count || 0;
+
+  const apprenticeshipCount =
+    employmentData.find(
+      (item) => item.employmentType?.toLowerCase() === "apprenticeship"
+    )?.count || 0;
+
+  // Compute salary progression metrics from /dashboard/wages
+  const { avgStartingSalary, avgCurrentSalary, salaryProgression } =
+    useMemo(() => {
+      let totalStart = 0;
+      let totalCurr = 0;
+      let count = 0;
+
+      for (const item of wagesData) {
+        const recs = item.records;
+        if (Array.isArray(recs) && recs.length > 0) {
+          const start = recs[0]?.salaryAmount;
+          const curr = recs[recs.length - 1]?.salaryAmount;
+          if (typeof start === "number" && typeof curr === "number") {
+            totalStart += start;
+            totalCurr += curr;
+            count++;
+          }
+        }
+      }
+
+      const starting = count > 0 ? Math.round(totalStart / count) : 0;
+      const current = count > 0 ? Math.round(totalCurr / count) : 0;
+      const progression =
+        starting > 0
+          ? Number((((current - starting) / starting) * 100).toFixed(1))
+          : 0;
+
+      return {
+        avgStartingSalary: starting,
+        avgCurrentSalary: current,
+        salaryProgression: progression,
+      };
+    }, [wagesData]);
+
+  // Lookup map for trainees by ID
+  const traineeMap = useMemo(() => {
+    const map = new Map();
+    for (const t of traineesData) {
+      map.set(t.id, t);
+    }
+    return map;
+  }, [traineesData]);
+
+  // Merge wages data with trainee info for the table
+  const wageRecords = useMemo(() => {
+    return wagesData.map((item, index) => {
+      const trainee = traineeMap.get(item.traineeId);
+      const recs = item.records || [];
+      const startingSalary = recs[0]?.salaryAmount || 0;
+      const currentSalary =
+        recs[recs.length - 1]?.salaryAmount || startingSalary;
+      const change =
+        startingSalary > 0
+          ? Number(
+              (((currentSalary - startingSalary) / startingSalary) * 100).toFixed(
+                1
+              )
+            )
+          : 0;
+
+      return {
+        id: item.employmentId || `${item.traineeId}-${index}`,
+        traineeId: item.traineeId,
+        trainee: trainee?.name || `Trainee #${item.traineeId}`,
+        qualification: trainee?.qualification || "",
+        district: trainee?.district || "Unknown",
+        role: item.role || "Trainee",
+        startingSalary,
+        currentSalary,
+        changePercent: change,
+      };
+    });
+  }, [wagesData, traineeMap]);
+
+  // Dynamic filter lists
+  const availableRoles = useMemo(() => {
+    const set = new Set();
+    wageRecords.forEach((r) => {
+      if (r.role) set.add(r.role);
+    });
+    return ["All Roles", ...Array.from(set).sort()];
+  }, [wageRecords]);
+
+  const availableDistricts = useMemo(() => {
+    const set = new Set();
+    wageRecords.forEach((r) => {
+      if (r.district && r.district !== "Unknown") set.add(r.district);
+    });
+    return ["All Districts", ...Array.from(set).sort()];
+  }, [wageRecords]);
+
+  const growthOptions = ["All Growth", "Positive Growth", "No Change"];
+
+  // Filtered records
+  const filteredRecords = useMemo(() => {
+    return wageRecords.filter((record) => {
+      const searchValue = search.toLowerCase().trim();
+
+      const matchesSearch =
+        !searchValue ||
+        record.trainee.toLowerCase().includes(searchValue) ||
+        record.role.toLowerCase().includes(searchValue) ||
+        record.district.toLowerCase().includes(searchValue);
+
+      const matchesRole =
+        role === "All Roles" || record.role === role;
+
+      const matchesDistrict =
+        district === "All Districts" || record.district === district;
+
+      const matchesGrowth =
+        growth === "All Growth" ||
+        (growth === "Positive Growth" && record.changePercent > 0) ||
+        (growth === "No Change" && record.changePercent <= 0);
+
+      return matchesSearch && matchesRole && matchesDistrict && matchesGrowth;
+    });
+  }, [wageRecords, search, role, district, growth]);
+
+  if (loading) {
     return (
-      matchesSearch &&
-      matchesType &&
-      matchesStatus &&
-      matchesVerification
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
     );
-  });
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-700">
+        <p className="font-semibold">Failed to load data</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -168,7 +237,7 @@ function Employment() {
           </p>
 
           <p className="text-3xl font-bold text-slate-900 mt-2">
-            318
+            {employmentCount.toLocaleString("en-IN")}
           </p>
 
           <p className="text-xs text-slate-400 mt-1">
@@ -182,7 +251,7 @@ function Employment() {
           </p>
 
           <p className="text-3xl font-bold text-slate-900 mt-2">
-            66
+            {selfEmploymentCount.toLocaleString("en-IN")}
           </p>
 
           <p className="text-xs text-slate-400 mt-1">
@@ -196,7 +265,7 @@ function Employment() {
           </p>
 
           <p className="text-3xl font-bold text-slate-900 mt-2">
-            44
+            {apprenticeshipCount.toLocaleString("en-IN")}
           </p>
 
           <p className="text-xs text-slate-400 mt-1">
@@ -212,7 +281,13 @@ function Employment() {
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
-                +15.2%
+                {salaryProgression >= 0
+                  ? `+${salaryProgression}%`
+                  : `${salaryProgression}%`}
+              </p>
+
+              <p className="text-xs text-slate-400 mt-1">
+                Avg: ₹{summaryData?.averageSalary ? Math.round(summaryData.averageSalary).toLocaleString("en-IN") : "0"}
               </p>
             </div>
 
@@ -252,48 +327,48 @@ function Employment() {
                   onChange={(event) =>
                     setSearch(event.target.value)
                   }
-                  placeholder="Search trainee, employer..."
+                  placeholder="Search trainee, role, district..."
                   className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
                 />
               </div>
 
-              {/* Type */}
+              {/* Role */}
               <select
-                value={type}
-                onChange={(event) => setType(event.target.value)}
+                value={role}
+                onChange={(event) => setRole(event.target.value)}
                 className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
               >
-                {types.map((item) => (
+                {availableRoles.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
                 ))}
               </select>
 
-              {/* Status */}
+              {/* District */}
               <select
-                value={status}
+                value={district}
                 onChange={(event) =>
-                  setStatus(event.target.value)
+                  setDistrict(event.target.value)
                 }
                 className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
               >
-                {statuses.map((item) => (
+                {availableDistricts.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
                 ))}
               </select>
 
-              {/* Verification */}
+              {/* Growth */}
               <select
-                value={verification}
+                value={growth}
                 onChange={(event) =>
-                  setVerification(event.target.value)
+                  setGrowth(event.target.value)
                 }
                 className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-600 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 bg-white"
               >
-                {verificationStatuses.map((item) => (
+                {growthOptions.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
@@ -308,7 +383,7 @@ function Employment() {
               </span>{" "}
               of{" "}
               <span className="font-semibold text-slate-800">
-                {employmentRecords.length}
+                {wageRecords.length}
               </span>{" "}
               displayed records
             </div>
@@ -325,27 +400,23 @@ function Employment() {
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Employer
-                </th>
-
-                <th className="text-left px-6 py-4 font-semibold text-slate-600">
                   Role
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Type
+                  District
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Status
+                  Starting Salary
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Verification
+                  Current Salary
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Relevance
+                  Salary Growth
                 </th>
               </tr>
             </thead>
@@ -363,66 +434,52 @@ function Employment() {
                           {record.trainee.charAt(0)}
                         </div>
 
-                        <span className="font-semibold text-slate-800">
-                          {record.trainee}
-                        </span>
+                        <div>
+                          <span className="font-semibold text-slate-800 block">
+                            {record.trainee}
+                          </span>
+                          {record.qualification && (
+                            <span className="text-xs text-slate-400">
+                              {record.qualification}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </td>
-
-                    <td className="px-6 py-4 text-slate-600">
-                      {record.employer}
-                    </td>
-
-                    <td className="px-6 py-4 text-slate-600">
-                      {record.role}
                     </td>
 
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-medium">
                         <BriefcaseBusiness size={14} />
-                        {record.type}
+                        {record.role}
                       </span>
                     </td>
 
-                    <td className="px-6 py-4">
-                      {record.status === "Active" ? (
-                        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 font-medium">
-                          <CheckCircle2 size={14} />
-                          Active
-                        </span>
-                      ) : record.status === "Unemployed" ? (
-                        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 font-medium">
-                          <Clock3 size={14} />
-                          Unemployed
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 font-medium">
-                          Inactive
-                        </span>
-                      )}
+                    <td className="px-6 py-4 text-slate-600 font-medium">
+                      {record.district}
                     </td>
 
-                    <td className="px-6 py-4">
-                      {record.verification === "Verified" ? (
-                        <span className="px-3 py-1.5 rounded-lg bg-green-50 text-green-700 font-medium">
-                          Verified
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 font-medium">
-                          Unverified
-                        </span>
-                      )}
+                    <td className="px-6 py-4 font-medium text-slate-700">
+                      ₹{record.startingSalary.toLocaleString("en-IN")}
+                    </td>
+
+                    <td className="px-6 py-4 font-semibold text-slate-800">
+                      ₹{record.currentSalary.toLocaleString("en-IN")}
                     </td>
 
                     <td className="px-6 py-4">
                       <span
-                        className={`px-3 py-1.5 rounded-lg font-medium ${
-                          record.relevance === "Relevant"
-                            ? "bg-blue-50 text-blue-700"
-                            : "bg-slate-100 text-slate-600"
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium ${
+                          record.changePercent > 0
+                            ? "bg-green-50 text-green-700"
+                            : record.changePercent === 0
+                            ? "bg-slate-100 text-slate-700"
+                            : "bg-red-50 text-red-700"
                         }`}
                       >
-                        {record.relevance}
+                        <TrendingUp size={14} />
+                        {record.changePercent >= 0
+                          ? `+${record.changePercent}%`
+                          : `${record.changePercent}%`}
                       </span>
                     </td>
                   </tr>
@@ -430,7 +487,7 @@ function Employment() {
               ) : (
                 <tr>
                   <td
-                    colSpan="7"
+                    colSpan="6"
                     className="px-6 py-12 text-center text-slate-500"
                   >
                     No employment records match the selected filters.
@@ -467,7 +524,7 @@ function Employment() {
             </p>
 
             <p className="text-2xl font-bold text-slate-900 mt-2">
-              ₹18,500
+              ₹{avgStartingSalary.toLocaleString("en-IN")}
             </p>
           </div>
 
@@ -477,7 +534,7 @@ function Employment() {
             </p>
 
             <p className="text-2xl font-bold text-slate-900 mt-2">
-              ₹21,310
+              ₹{avgCurrentSalary.toLocaleString("en-IN")}
             </p>
           </div>
 
@@ -487,7 +544,9 @@ function Employment() {
             </p>
 
             <p className="text-2xl font-bold text-green-600 mt-2">
-              +15.2%
+              {salaryProgression >= 0
+                ? `+${salaryProgression}%`
+                : `${salaryProgression}%`}
             </p>
           </div>
         </div>

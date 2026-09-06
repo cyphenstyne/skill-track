@@ -1,106 +1,148 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Award,
   Search,
   Users,
   TrendingUp,
 } from "lucide-react";
+import { fetchApi } from "../api";
 
-const skills = [
-  {
-    id: 1,
-    name: "Java",
-    category: "Programming",
-    trainees: 86,
-    proficiency: "Intermediate",
-    coverage: 17.2,
-  },
-  {
-    id: 2,
-    name: "Python",
-    category: "Programming",
-    trainees: 82,
-    proficiency: "Intermediate",
-    coverage: 16.4,
-  },
-  {
-    id: 3,
-    name: "JavaScript",
-    category: "Programming",
-    trainees: 78,
-    proficiency: "Intermediate",
-    coverage: 15.6,
-  },
-  {
-    id: 4,
-    name: "React",
-    category: "Web Development",
-    trainees: 64,
-    proficiency: "Intermediate",
-    coverage: 12.8,
-  },
-  {
-    id: 5,
-    name: "SQL",
-    category: "Database",
-    trainees: 71,
-    proficiency: "Intermediate",
-    coverage: 14.2,
-  },
-  {
-    id: 6,
-    name: "Git",
-    category: "Development Tools",
-    trainees: 59,
-    proficiency: "Intermediate",
-    coverage: 11.8,
-  },
-  {
-    id: 7,
-    name: "AWS",
-    category: "Cloud",
-    trainees: 42,
-    proficiency: "Beginner",
-    coverage: 8.4,
-  },
-  {
-    id: 8,
-    name: "Power BI",
-    category: "Data",
-    trainees: 38,
-    proficiency: "Beginner",
-    coverage: 7.6,
-  },
-];
+function getCommonProficiency(skill) {
+  const beginner = skill.beginnerCount || 0;
+  const intermediate = skill.intermediateCount || 0;
+  const advanced = skill.advancedCount || 0;
 
-const categories = [
-  "All Categories",
-  "Programming",
-  "Web Development",
-  "Database",
-  "Development Tools",
-  "Cloud",
-  "Data",
-];
+  if (beginner === 0 && intermediate === 0 && advanced === 0) {
+    return "N/A";
+  }
+
+  if (advanced > intermediate && advanced > beginner) {
+    return "Advanced";
+  }
+  if (intermediate >= beginner && intermediate >= advanced) {
+    return "Intermediate";
+  }
+  if (beginner >= intermediate && beginner >= advanced) {
+    return "Beginner";
+  }
+  return "Intermediate";
+}
 
 function Skills() {
+  const [skills, setSkills] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All Categories");
 
-  const filteredSkills = skills.filter((skill) => {
-    const searchValue = search.toLowerCase().trim();
+  useEffect(() => {
+    let isMounted = true;
 
-    const matchesSearch =
-      skill.name.toLowerCase().includes(searchValue) ||
-      skill.category.toLowerCase().includes(searchValue) ||
-      skill.proficiency.toLowerCase().includes(searchValue);
+    async function loadData() {
+      try {
+        setLoading(true);
+        setError(null);
 
-    const matchesCategory =
-      category === "All Categories" ||
-      skill.category === category;
+        const [skillGapsData, summaryData] = await Promise.all([
+          fetchApi("/dashboard/skill-gaps"),
+          fetchApi("/dashboard/summary"),
+        ]);
 
-    return matchesSearch && matchesCategory;
-  });
+        if (isMounted) {
+          setSkills(Array.isArray(skillGapsData) ? skillGapsData : []);
+          setSummary(summaryData || {});
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || "Failed to load data");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const mostCommonSkill = useMemo(() => {
+    if (!skills || skills.length === 0) return "N/A";
+    const topSkill = skills.reduce((prev, curr) => {
+      const currCount = curr.traineeCount || 0;
+      const prevCount = prev.traineeCount || 0;
+      return currCount > prevCount ? curr : prev;
+    }, skills[0]);
+    return topSkill?.name || "N/A";
+  }, [skills]);
+
+  const categories = useMemo(() => {
+    const unique = Array.from(
+      new Set(skills.map((s) => s.category).filter(Boolean))
+    ).sort();
+    return ["All Categories", ...unique];
+  }, [skills]);
+
+  const totalTrainees = summary?.totalTrainees || 0;
+
+  const processedSkills = useMemo(() => {
+    return skills.map((skill) => {
+      const proficiency = getCommonProficiency(skill);
+      const coverage =
+        totalTrainees > 0
+          ? Number(((skill.traineeCount / totalTrainees) * 100).toFixed(1))
+          : 0;
+
+      return {
+        id: skill.id,
+        name: skill.name,
+        category: skill.category,
+        trainees: skill.traineeCount ?? 0,
+        traineeCount: skill.traineeCount ?? 0,
+        proficiency,
+        coverage,
+      };
+    });
+  }, [skills, totalTrainees]);
+
+  const filteredSkills = useMemo(() => {
+    return processedSkills.filter((skill) => {
+      const searchValue = search.toLowerCase().trim();
+
+      const matchesSearch =
+        (skill.name || "").toLowerCase().includes(searchValue) ||
+        (skill.category || "").toLowerCase().includes(searchValue) ||
+        (skill.proficiency || "").toLowerCase().includes(searchValue);
+
+      const matchesCategory =
+        category === "All Categories" ||
+        skill.category === category;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [processedSkills, search, category]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-700">
+        <p className="font-semibold">Failed to load data</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -129,7 +171,7 @@ function Skills() {
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
-                30
+                {skills.length}
               </p>
             </div>
 
@@ -147,7 +189,7 @@ function Skills() {
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
-                500
+                {totalTrainees}
               </p>
             </div>
 
@@ -165,7 +207,7 @@ function Skills() {
               </p>
 
               <p className="text-2xl font-bold text-slate-900 mt-2">
-                Java
+                {mostCommonSkill}
               </p>
             </div>
 
@@ -303,7 +345,7 @@ function Skills() {
                           <div
                             className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
                             style={{
-                              width: `${skill.coverage}%`,
+                              width: `${Math.min(skill.coverage, 100)}%`,
                             }}
                           />
                         </div>
