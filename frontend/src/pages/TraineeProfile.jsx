@@ -212,7 +212,7 @@ function TraineeProfile({ traineeId: traineeIdProp, onBack }) {
           </div>
 
           <StatusBadge type={profile.consentStatus ? "green" : "pink"}>
-            {profile.consentStatus ? "Consent Provided" : "No Consent"}
+            {profile.consentStatus ? "Tracking Consent Provided" : "No Tracking Consent"}
           </StatusBadge>
         </div>
       </div>
@@ -235,7 +235,7 @@ function TraineeProfile({ traineeId: traineeIdProp, onBack }) {
             />
             <InfoItem label="Trainee ID" value={`#${profile.id}`} />
             <InfoItem
-              label="Consent"
+              label="Tracking Consent"
               value={profile.consentStatus ? "Yes" : "No"}
             />
           </div>
@@ -543,11 +543,11 @@ function TraineeProfile({ traineeId: traineeIdProp, onBack }) {
 
           <div>
             <h2 className="font-semibold text-pink-800">
-              Consent information requires attention
+              Tracking consent information requires attention
             </h2>
 
             <p className="text-sm text-pink-700 mt-1">
-              This trainee has not provided consent for the current record.
+              This trainee has not provided tracking consent for the current record.
             </p>
           </div>
         </div>

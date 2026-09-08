@@ -129,7 +129,7 @@ function Trainees() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-500">
-                Consent Given
+                Tracking Consent Given
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
@@ -147,7 +147,7 @@ function Trainees() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-500">
-                Consent Not Given
+                Tracking Consent Not Given
               </p>
 
               <p className="text-3xl font-bold text-slate-900 mt-2">
@@ -235,7 +235,7 @@ function Trainees() {
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Consent
+                  Tracking Consent
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
