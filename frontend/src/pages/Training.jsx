@@ -370,33 +370,6 @@ function Training() {
         </div>
       </div>
 
-      {/* Backend mapping */}
-      <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-5">
-        <div className="flex items-start gap-3">
-          <GraduationCap
-            className="text-blue-600 mt-0.5"
-            size={20}
-          />
-
-          <div>
-            <h3 className="font-semibold text-slate-900">
-              Backend mapping
-            </h3>
-
-            <p className="text-sm text-slate-600 mt-1">
-              Provider information comes from{" "}
-              <span className="font-medium text-slate-800">
-                training_providers
-              </span>
-              , while course information maps to{" "}
-              <span className="font-medium text-slate-800">
-                courses
-              </span>{" "}
-              and its provider relationship.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

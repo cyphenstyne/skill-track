@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   MapPin,
@@ -67,7 +68,11 @@ function formatCurrency(amount) {
   }).format(amount);
 }
 
-function TraineeProfile({ traineeId, onBack }) {
+function TraineeProfile({ traineeId: traineeIdProp, onBack }) {
+  const { id: routeId } = useParams();
+  const navigate = useNavigate();
+  const traineeId = traineeIdProp ?? routeId;
+  const handleBack = onBack ?? (() => navigate("/trainees"));
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -114,7 +119,7 @@ function TraineeProfile({ traineeId, onBack }) {
     return (
       <div className="space-y-6">
         <button
-          onClick={onBack}
+          onClick={handleBack}
           className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
         >
           <ArrowLeft size={17} />
@@ -132,7 +137,7 @@ function TraineeProfile({ traineeId, onBack }) {
     return (
       <div className="space-y-6">
         <button
-          onClick={onBack}
+          onClick={handleBack}
           className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
         >
           <ArrowLeft size={17} />
@@ -145,17 +150,20 @@ function TraineeProfile({ traineeId, onBack }) {
     );
   }
 
+  const hasConsent = Boolean(profile.consentStatus);
+  // Consent gate: only outcome-tracking data requires consent.
+  // Learning records (training/skills/certification/address) stay visible.
   const address = profile.address || {};
   const courses = profile.courses || [];
   const primaryCourse = courses[0];
   const skills = profile.skills || [];
   const certifications = profile.certifications || [];
   const primaryCert = certifications[0];
-  const employmentList = profile.employment || [];
+  const employmentList = hasConsent ? profile.employment || [] : [];
   const primaryEmployment = employmentList[0];
-  const salaryHistory = profile.salaryHistory || [];
-  const followUps = profile.followUps || [];
-  const nonPlacement = profile.nonPlacement || [];
+  const salaryHistory = hasConsent ? profile.salaryHistory || [] : [];
+  const followUps = hasConsent ? profile.followUps || [] : [];
+  const nonPlacement = hasConsent ? profile.nonPlacement || [] : [];
 
   // Salary calculations
   const startingSalary =
@@ -173,7 +181,7 @@ function TraineeProfile({ traineeId, onBack }) {
     <div className="space-y-6">
       {/* Back */}
       <button
-        onClick={onBack}
+        onClick={handleBack}
         className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
       >
         <ArrowLeft size={17} />

@@ -60,6 +60,7 @@ async function getTraineeById(id) {
         }
 
         const trainee = traineeResult.rows[0];
+        const hasConsent = Boolean(trainee.consent_status);
 
         const coursesResult = await client.query(
             `
@@ -238,45 +239,53 @@ async function getTraineeById(id) {
                 courseName: row.course_name
             })),
 
-            employment: employmentResult.rows.map((row) => ({
-                id: Number(row.id),
-                employerId: row.employer_id
-                    ? Number(row.employer_id)
-                    : null,
-                employerName: row.employer_name,
-                industry: row.industry,
-                employmentType: row.employment_type,
-                role: row.role,
-                startDate: row.start_date,
-                endDate: row.end_date,
-                status: row.status,
-                verificationStatus: row.verification_status,
-                trainingRelevance: row.training_relevance,
-                jobSource: row.job_source
-            })),
+            employment: hasConsent
+                ? employmentResult.rows.map((row) => ({
+                      id: Number(row.id),
+                      employerId: row.employer_id
+                          ? Number(row.employer_id)
+                          : null,
+                      employerName: row.employer_name,
+                      industry: row.industry,
+                      employmentType: row.employment_type,
+                      role: row.role,
+                      startDate: row.start_date,
+                      endDate: row.end_date,
+                      status: row.status,
+                      verificationStatus: row.verification_status,
+                      trainingRelevance: row.training_relevance,
+                      jobSource: row.job_source
+                  }))
+                : [],
 
-            salaryHistory: salaryResult.rows.map((row) => ({
-                id: Number(row.id),
-                employmentId: Number(row.employment_id),
-                salaryAmount: Number(row.salary_amount),
-                salaryPeriod: row.salary_period,
-                recordedAt: row.recorded_at
-            })),
+            salaryHistory: hasConsent
+                ? salaryResult.rows.map((row) => ({
+                      id: Number(row.id),
+                      employmentId: Number(row.employment_id),
+                      salaryAmount: Number(row.salary_amount),
+                      salaryPeriod: row.salary_period,
+                      recordedAt: row.recorded_at
+                  }))
+                : [],
 
-            followUps: followUpsResult.rows.map((row) => ({
-                id: Number(row.id),
-                scheduledAt: row.scheduled_at,
-                completedAt: row.completed_at,
-                channel: row.channel,
-                employmentStatus: row.employment_status,
-                responseStatus: row.response_status
-            })),
+            followUps: hasConsent
+                ? followUpsResult.rows.map((row) => ({
+                      id: Number(row.id),
+                      scheduledAt: row.scheduled_at,
+                      completedAt: row.completed_at,
+                      channel: row.channel,
+                      employmentStatus: row.employment_status,
+                      responseStatus: row.response_status
+                  }))
+                : [],
 
-            nonPlacement: nonPlacementResult.rows.map((row) => ({
-                reasonId: Number(row.reason_id),
-                reason: row.reason,
-                reportedAt: row.reported_at
-            }))
+            nonPlacement: hasConsent
+                ? nonPlacementResult.rows.map((row) => ({
+                      reasonId: Number(row.reason_id),
+                      reason: row.reason,
+                      reportedAt: row.reported_at
+                  }))
+                : []
         };
     } finally {
         client.release();
