@@ -7,7 +7,7 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, ""
 
 const DEFAULT_TIMEOUT_MS = 10000;
 
-export async function fetchApi(endpoint, { timeoutMs = DEFAULT_TIMEOUT_MS, signal } = {}) {
+export async function fetchApi(endpoint, { timeoutMs = DEFAULT_TIMEOUT_MS, signal, method = "GET", body } = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -20,8 +20,13 @@ export async function fetchApi(endpoint, { timeoutMs = DEFAULT_TIMEOUT_MS, signa
   let response;
   try {
     response = await fetch(`${BASE_URL}${endpoint}`, {
+      method,
       signal: controller.signal,
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+      },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
   } catch (err) {
     if (err?.name === "AbortError") {

@@ -7,6 +7,7 @@ import {
   BriefcaseBusiness,
   ClipboardCheck,
   AlertCircle,
+  Target,
 } from "lucide-react";
 
 const navigation = [
@@ -14,6 +15,7 @@ const navigation = [
   { name: "Trainees", path: "/trainees", icon: Users },
   { name: "Training", path: "/training", icon: GraduationCap },
   { name: "Skills", path: "/skills", icon: Award },
+  { name: "Skill Gaps", path: "/skill-gaps", icon: Target },
   { name: "Employment", path: "/employment", icon: BriefcaseBusiness },
   { name: "Follow-ups", path: "/follow-ups", icon: ClipboardCheck },
   { name: "Non-placement", path: "/non-placement", icon: AlertCircle },

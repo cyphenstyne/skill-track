@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Users, Eye, CheckCircle2, XCircle } from "lucide-react";
+import { Search, Users, Eye, CheckCircle2, XCircle, Plus } from "lucide-react";
 import { fetchApi } from "../api";
 import Pagination from "../components/Pagination";
+import AddTraineeModal from "../components/AddTraineeModal";
 import { paginate, PAGE_SIZE } from "../utils/pagination";
 
 function Trainees() {
@@ -13,6 +14,8 @@ function Trainees() {
   const [search, setSearch] = useState("");
   const [district, setDistrict] = useState("All Districts");
   const [page, setPage] = useState(1);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -41,7 +44,17 @@ function Trainees() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [refreshKey]);
+
+  function handleTraineeCreated(created) {
+    setShowAddModal(false);
+    setPage(1);
+    if (created?.id) {
+      navigate(`/trainees/${created.id}`);
+    } else {
+      setRefreshKey((key) => key + 1);
+    }
+  }
 
   if (loading) {
     return (
@@ -91,18 +104,28 @@ function Trainees() {
   return (
     <div className="space-y-8">
       {/* Heading */}
-      <div>
-        <p className="text-sm font-medium text-blue-600">
-          Trainee Management
-        </p>
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-blue-600">
+            Trainee Management
+          </p>
 
-        <h1 className="text-3xl font-bold text-slate-900 mt-1">
-          Trainees
-        </h1>
+          <h1 className="text-3xl font-bold text-slate-900 mt-1">
+            Trainees
+          </h1>
 
-        <p className="text-slate-500 mt-2">
-          View and track registered trainees and their basic information.
-        </p>
+          <p className="text-slate-500 mt-2">
+            View and track registered trainees and their basic information.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition shrink-0"
+        >
+          <Plus size={17} />
+          Add Trainee
+        </button>
       </div>
 
       {/* Summary */}
@@ -317,6 +340,13 @@ function Trainees() {
           onPageChange={setPage}
         />
       </div>
+
+      {showAddModal && (
+        <AddTraineeModal
+          onClose={() => setShowAddModal(false)}
+          onCreated={handleTraineeCreated}
+        />
+      )}
     </div>
   );
 }

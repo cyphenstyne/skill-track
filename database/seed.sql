@@ -126,6 +126,100 @@ VALUES
 
 
 -- ============================================================
+-- ROLES
+-- ============================================================
+
+INSERT INTO roles (name, category, description)
+VALUES
+    ('Software Developer', 'Software Engineering',
+     'Builds and maintains software applications and backend services.'),
+    ('Frontend Developer', 'Software Engineering',
+     'Builds responsive web interfaces and client-side applications.'),
+    ('Data Analyst', 'Data',
+     'Analyses data and produces reports, dashboards and business insights.'),
+    ('Cloud Support Engineer', 'Cloud',
+     'Supports cloud infrastructure, deployments and basic cloud operations.'),
+    ('DevOps Engineer', 'DevOps',
+     'Automates software delivery and manages infrastructure and deployments.'),
+    ('Digital Marketing Executive', 'Marketing',
+     'Runs digital campaigns, content initiatives and performance analysis.'),
+    ('UI/UX Designer', 'Design',
+     'Designs user interfaces and user experiences for digital products.'),
+    ('Android Developer', 'Mobile',
+     'Builds and maintains Android applications.');
+
+
+-- ============================================================
+-- ROLE REQUIRED SKILLS
+-- ============================================================
+
+INSERT INTO role_required_skills
+    (role_id, skill_id, required_proficiency, is_core)
+SELECT
+    r.id,
+    s.id,
+    x.required_proficiency,
+    x.is_core
+FROM (
+    VALUES
+        ('Software Developer', 'Java', 'Intermediate', TRUE),
+        ('Software Developer', 'Spring Boot', 'Intermediate', TRUE),
+        ('Software Developer', 'REST API', 'Intermediate', TRUE),
+        ('Software Developer', 'SQL', 'Intermediate', TRUE),
+        ('Software Developer', 'Git', 'Intermediate', TRUE),
+        ('Software Developer', 'GitHub', 'Beginner', FALSE),
+        ('Software Developer', 'Docker', 'Beginner', FALSE),
+
+        ('Frontend Developer', 'HTML', 'Intermediate', TRUE),
+        ('Frontend Developer', 'CSS', 'Intermediate', TRUE),
+        ('Frontend Developer', 'JavaScript', 'Intermediate', TRUE),
+        ('Frontend Developer', 'React', 'Intermediate', TRUE),
+        ('Frontend Developer', 'Git', 'Intermediate', TRUE),
+        ('Frontend Developer', 'Tailwind CSS', 'Beginner', FALSE),
+
+        ('Data Analyst', 'Excel', 'Intermediate', TRUE),
+        ('Data Analyst', 'SQL', 'Intermediate', TRUE),
+        ('Data Analyst', 'Python', 'Intermediate', TRUE),
+        ('Data Analyst', 'Data Analysis', 'Intermediate', TRUE),
+        ('Data Analyst', 'Power BI', 'Intermediate', TRUE),
+        ('Data Analyst', 'Tableau', 'Beginner', FALSE),
+
+        ('Cloud Support Engineer', 'AWS', 'Intermediate', TRUE),
+        ('Cloud Support Engineer', 'Linux', 'Intermediate', TRUE),
+        ('Cloud Support Engineer', 'Networking', 'Intermediate', TRUE),
+        ('Cloud Support Engineer', 'Bash Scripting', 'Beginner', FALSE),
+        ('Cloud Support Engineer', 'Docker', 'Beginner', FALSE),
+
+        ('DevOps Engineer', 'Linux', 'Intermediate', TRUE),
+        ('DevOps Engineer', 'Docker', 'Intermediate', TRUE),
+        ('DevOps Engineer', 'Kubernetes', 'Intermediate', TRUE),
+        ('DevOps Engineer', 'CI/CD', 'Intermediate', TRUE),
+        ('DevOps Engineer', 'Git', 'Intermediate', TRUE),
+        ('DevOps Engineer', 'Terraform', 'Beginner', FALSE),
+        ('DevOps Engineer', 'AWS', 'Intermediate', TRUE),
+
+        ('Digital Marketing Executive', 'Digital Marketing', 'Intermediate', TRUE),
+        ('Digital Marketing Executive', 'Excel', 'Beginner', FALSE),
+        ('Digital Marketing Executive', 'Data Analysis', 'Beginner', FALSE),
+        ('Digital Marketing Executive', 'Communication', 'Intermediate', TRUE),
+
+        ('UI/UX Designer', 'Figma', 'Intermediate', TRUE),
+        ('UI/UX Designer', 'UI Design', 'Intermediate', TRUE),
+        ('UI/UX Designer', 'Communication', 'Intermediate', TRUE),
+        ('UI/UX Designer', 'Problem Solving', 'Intermediate', TRUE),
+
+        ('Android Developer', 'Kotlin', 'Intermediate', TRUE),
+        ('Android Developer', 'Git', 'Intermediate', TRUE),
+        ('Android Developer', 'REST API', 'Intermediate', TRUE),
+        ('Android Developer', 'SQL', 'Beginner', FALSE)
+) AS x(role_name, skill_name, required_proficiency, is_core)
+JOIN roles r
+    ON r.name = x.role_name
+JOIN skills s
+    ON s.name = x.skill_name;
+
+
+-- ============================================================
 -- TRAINEES
 -- ============================================================
 
@@ -331,6 +425,131 @@ FROM trainees t
 CROSS JOIN skills s
 
 WHERE ((t.id + s.id) % 11) < 2;
+
+
+-- ============================================================
+-- CONTROLLED SKILL-GAP EXAMPLES
+-- ============================================================
+-- The first 8 trainees are assigned target roles and their skills
+-- are deliberately controlled so the dashboard can demonstrate
+-- which required skills they have and which are missing.
+
+DELETE FROM trainee_skills
+WHERE trainee_id BETWEEN 1 AND 8;
+
+INSERT INTO trainee_target_roles (trainee_id, role_id, target_level)
+SELECT v.trainee_id, r.id, 'Entry-level'
+FROM (
+    VALUES
+        (1, 'Software Developer'),
+        (2, 'Frontend Developer'),
+        (3, 'Data Analyst'),
+        (4, 'Cloud Support Engineer'),
+        (5, 'DevOps Engineer'),
+        (6, 'Digital Marketing Executive'),
+        (7, 'UI/UX Designer'),
+        (8, 'Android Developer')
+) AS v(trainee_id, role_name)
+JOIN roles r
+    ON r.name = v.role_name;
+
+
+-- Trainee 1: has Java, Spring Boot, SQL, Git; missing REST API, GitHub, Docker.
+INSERT INTO trainee_skills (trainee_id, skill_id, proficiency_level, source)
+SELECT 1, id, proficiency_level, 'assessment'
+FROM (
+    VALUES
+        ('Java', 'Intermediate'),
+        ('Spring Boot', 'Intermediate'),
+        ('SQL', 'Intermediate'),
+        ('Git', 'Intermediate')
+) AS v(skill_name, proficiency_level)
+JOIN skills s ON s.name = v.skill_name;
+
+
+-- Trainee 2: has HTML, CSS, JavaScript, Git; missing React and Tailwind CSS.
+INSERT INTO trainee_skills (trainee_id, skill_id, proficiency_level, source)
+SELECT 2, id, proficiency_level, 'assessment'
+FROM (
+    VALUES
+        ('HTML', 'Advanced'),
+        ('CSS', 'Intermediate'),
+        ('JavaScript', 'Intermediate'),
+        ('Git', 'Beginner')
+) AS v(skill_name, proficiency_level)
+JOIN skills s ON s.name = v.skill_name;
+
+
+-- Trainee 3: has Excel, SQL, Python, Data Analysis; missing Power BI and Tableau.
+INSERT INTO trainee_skills (trainee_id, skill_id, proficiency_level, source)
+SELECT 3, id, proficiency_level, 'assessment'
+FROM (
+    VALUES
+        ('Excel', 'Advanced'),
+        ('SQL', 'Intermediate'),
+        ('Python', 'Beginner'),
+        ('Data Analysis', 'Intermediate')
+) AS v(skill_name, proficiency_level)
+JOIN skills s ON s.name = v.skill_name;
+
+
+-- Trainee 4: has AWS, Linux, Networking; missing Bash Scripting and Docker.
+INSERT INTO trainee_skills (trainee_id, skill_id, proficiency_level, source)
+SELECT 4, id, proficiency_level, 'assessment'
+FROM (
+    VALUES
+        ('AWS', 'Intermediate'),
+        ('Linux', 'Intermediate'),
+        ('Networking', 'Beginner')
+) AS v(skill_name, proficiency_level)
+JOIN skills s ON s.name = v.skill_name;
+
+
+-- Trainee 5: has Linux, Docker, Git, AWS; missing Kubernetes, CI/CD and Terraform.
+INSERT INTO trainee_skills (trainee_id, skill_id, proficiency_level, source)
+SELECT 5, id, proficiency_level, 'assessment'
+FROM (
+    VALUES
+        ('Linux', 'Intermediate'),
+        ('Docker', 'Intermediate'),
+        ('Git', 'Intermediate'),
+        ('AWS', 'Beginner')
+) AS v(skill_name, proficiency_level)
+JOIN skills s ON s.name = v.skill_name;
+
+
+-- Trainee 6: has Digital Marketing and Excel; missing Data Analysis and Communication.
+INSERT INTO trainee_skills (trainee_id, skill_id, proficiency_level, source)
+SELECT 6, id, proficiency_level, 'assessment'
+FROM (
+    VALUES
+        ('Digital Marketing', 'Intermediate'),
+        ('Excel', 'Beginner')
+) AS v(skill_name, proficiency_level)
+JOIN skills s ON s.name = v.skill_name;
+
+
+-- Trainee 7: has Figma, UI Design and Problem Solving; missing Communication.
+INSERT INTO trainee_skills (trainee_id, skill_id, proficiency_level, source)
+SELECT 7, id, proficiency_level, 'assessment'
+FROM (
+    VALUES
+        ('Figma', 'Intermediate'),
+        ('UI Design', 'Intermediate'),
+        ('Problem Solving', 'Beginner')
+) AS v(skill_name, proficiency_level)
+JOIN skills s ON s.name = v.skill_name;
+
+
+-- Trainee 8: has Kotlin and Git; missing REST API and SQL.
+INSERT INTO trainee_skills (trainee_id, skill_id, proficiency_level, source)
+SELECT 8, id, proficiency_level, 'assessment'
+FROM (
+    VALUES
+        ('Kotlin', 'Intermediate'),
+        ('Git', 'Beginner')
+) AS v(skill_name, proficiency_level)
+JOIN skills s ON s.name = v.skill_name;
 
 
 -- ============================================================

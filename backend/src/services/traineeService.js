@@ -292,7 +292,94 @@ async function getTraineeById(id) {
     }
 }
 
+async function createTrainee(data) {
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const traineeResult = await client.query(
+            `
+            INSERT INTO trainees (
+                name,
+                date_of_birth,
+                last_educational_qualification,
+                phone_primary,
+                phone_secondary,
+                consent_status
+            )
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+            `,
+            [
+                data.name,
+                data.dateOfBirth || null,
+                data.qualification || null,
+                data.phonePrimary || null,
+                data.phoneSecondary || null,
+                Boolean(data.consentStatus)
+            ]
+        );
+
+        const traineeId = Number(traineeResult.rows[0].id);
+
+        let address = null;
+        if (data.address) {
+            const addressResult = await client.query(
+                `
+                INSERT INTO trainee_addresses (
+                    trainee_id,
+                    address_line,
+                    city,
+                    district,
+                    state,
+                    pincode
+                )
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING address_line, city, district, state, pincode
+                `,
+                [
+                    traineeId,
+                    data.address.addressLine,
+                    data.address.city || null,
+                    data.address.district,
+                    data.address.state,
+                    data.address.pincode || null
+                ]
+            );
+
+            const row = addressResult.rows[0];
+            address = {
+                addressLine: row.address_line,
+                city: row.city,
+                district: row.district,
+                state: row.state,
+                pincode: row.pincode
+            };
+        }
+
+        await client.query("COMMIT");
+
+        return {
+            id: traineeId,
+            name: data.name,
+            dateOfBirth: data.dateOfBirth || null,
+            qualification: data.qualification || null,
+            phonePrimary: data.phonePrimary || null,
+            phoneSecondary: data.phoneSecondary || null,
+            consentStatus: Boolean(data.consentStatus),
+            address
+        };
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
 module.exports = {
     getTrainees,
-    getTraineeById
+    getTraineeById,
+    createTrainee
 };

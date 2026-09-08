@@ -6,6 +6,7 @@ import Trainees from "./pages/Trainees";
 import TraineeProfile from "./pages/TraineeProfile";
 import Training from "./pages/Training";
 import Skills from "./pages/Skills";
+import SkillGapCalculator from "./pages/SkillGapCalculator";
 import Employment from "./pages/Employment";
 import FollowUps from "./pages/FollowUps";
 import NonPlacement from "./pages/NonPlacement";
@@ -50,6 +51,7 @@ function App() {
             <Route path="/trainees/:id" element={<TraineeProfile />} />
             <Route path="/training" element={<Training />} />
             <Route path="/skills" element={<Skills />} />
+            <Route path="/skill-gaps" element={<SkillGapCalculator />} />
             <Route path="/employment" element={<Employment />} />
             <Route path="/follow-ups" element={<FollowUps />} />
             <Route path="/non-placement" element={<NonPlacement />} />

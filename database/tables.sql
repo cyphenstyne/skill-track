@@ -2,6 +2,10 @@
 -- SKILLPULSE - DATABASE SCHEMA
 -- ============================================================
 
+DROP VIEW IF EXISTS trainee_skill_gaps CASCADE;
+DROP TABLE IF EXISTS trainee_target_roles CASCADE;
+DROP TABLE IF EXISTS role_required_skills CASCADE;
+DROP TABLE IF EXISTS roles CASCADE;
 DROP TABLE IF EXISTS trainee_non_placement CASCADE;
 DROP TABLE IF EXISTS follow_ups CASCADE;
 DROP TABLE IF EXISTS salary_history CASCADE;
@@ -86,6 +90,43 @@ CREATE TABLE skills (
     id       BIGSERIAL PRIMARY KEY,
     name     VARCHAR(120) UNIQUE NOT NULL,
     category VARCHAR(100)
+);
+
+
+-- ============================================================
+-- ROLES
+-- ============================================================
+
+CREATE TABLE roles (
+    id          BIGSERIAL PRIMARY KEY,
+    name        VARCHAR(150) UNIQUE NOT NULL,
+    category    VARCHAR(100),
+    description VARCHAR(300)
+);
+
+
+-- ============================================================
+-- ROLE ↔ REQUIRED SKILLS
+-- ============================================================
+
+CREATE TABLE role_required_skills (
+    role_id              BIGINT NOT NULL REFERENCES roles(id),
+    skill_id             BIGINT NOT NULL REFERENCES skills(id),
+    required_proficiency VARCHAR(30) NOT NULL DEFAULT 'Intermediate',
+    is_core              BOOLEAN NOT NULL DEFAULT TRUE,
+    PRIMARY KEY (role_id, skill_id)
+);
+
+
+-- ============================================================
+-- TRAINEE ↔ TARGET ROLE
+-- ============================================================
+
+CREATE TABLE trainee_target_roles (
+    trainee_id   BIGINT NOT NULL REFERENCES trainees(id),
+    role_id      BIGINT NOT NULL REFERENCES roles(id),
+    target_level VARCHAR(50) DEFAULT 'Entry-level',
+    PRIMARY KEY (trainee_id, role_id)
 );
 
 
@@ -244,3 +285,47 @@ CREATE INDEX idx_salary_employment
 
 CREATE INDEX idx_followups_trainee
     ON follow_ups(trainee_id);
+
+
+CREATE INDEX idx_role_required_skills_role
+    ON role_required_skills(role_id);
+
+CREATE INDEX idx_role_required_skills_skill
+    ON role_required_skills(skill_id);
+
+CREATE INDEX idx_target_roles_trainee
+    ON trainee_target_roles(trainee_id);
+
+
+-- ============================================================
+-- SKILL GAP VIEW
+-- ============================================================
+-- One row per required skill, showing whether the trainee has it.
+
+CREATE VIEW trainee_skill_gaps AS
+SELECT
+    t.id AS trainee_id,
+    t.name AS trainee_name,
+    r.id AS role_id,
+    r.name AS role_name,
+    s.id AS skill_id,
+    s.name AS skill_name,
+    rrs.required_proficiency,
+    rrs.is_core,
+    CASE
+        WHEN ts.skill_id IS NULL THEN 'missing'
+        ELSE 'has'
+    END AS skill_status,
+    ts.proficiency_level AS trainee_proficiency
+FROM trainee_target_roles ttr
+JOIN trainees t
+    ON t.id = ttr.trainee_id
+JOIN roles r
+    ON r.id = ttr.role_id
+JOIN role_required_skills rrs
+    ON rrs.role_id = r.id
+JOIN skills s
+    ON s.id = rrs.skill_id
+LEFT JOIN trainee_skills ts
+    ON ts.trainee_id = t.id
+   AND ts.skill_id = s.id;

@@ -3,6 +3,7 @@ const cors = require("cors");
 
 const dashboardRoutes = require("./routes/dashboard");
 const traineeRoutes = require("./routes/trainees");
+const skillGapRoutes = require("./routes/skillGaps");
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/trainees", traineeRoutes);
+app.use("/api/skill-gaps", skillGapRoutes);
 
 app.use((req, res) => {
     res.status(404).json({
