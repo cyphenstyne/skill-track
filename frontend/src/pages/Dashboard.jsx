@@ -393,7 +393,7 @@ function Dashboard() {
 
                 <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
+                    className="h-full bg-linear-to-r from-blue-500 to-indigo-600 rounded-full"
                     style={{ width: `${item.percent}%` }}
                   />
                 </div>
@@ -472,7 +472,7 @@ function Dashboard() {
 
           <div className="mt-6 h-3 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
+              className="h-full bg-linear-to-r from-blue-500 to-indigo-600 rounded-full"
               style={{ width: `${followUpPercent}%` }}
             />
           </div>

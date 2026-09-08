@@ -1,3 +1,4 @@
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -9,27 +10,27 @@ import {
 } from "lucide-react";
 
 const navigation = [
-  { name: "Dashboard", icon: LayoutDashboard },
-  { name: "Trainees", icon: Users },
-  { name: "Training", icon: GraduationCap },
-  { name: "Skills", icon: Award },
-  { name: "Employment", icon: BriefcaseBusiness },
-  { name: "Follow-ups", icon: ClipboardCheck },
-  { name: "Non-placement", icon: AlertCircle },
+  { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { name: "Trainees", path: "/trainees", icon: Users },
+  { name: "Training", path: "/training", icon: GraduationCap },
+  { name: "Skills", path: "/skills", icon: Award },
+  { name: "Employment", path: "/employment", icon: BriefcaseBusiness },
+  { name: "Follow-ups", path: "/follow-ups", icon: ClipboardCheck },
+  { name: "Non-placement", path: "/non-placement", icon: AlertCircle },
 ];
 
-function Sidebar({ activePage, setActivePage }) {
+function Sidebar() {
   return (
-    <aside className="w-64 min-h-screen bg-white/90 backdrop-blur-sm border-r border-[#DCE6F5] flex flex-col">
-      {/* Brand */}
-      <div className="px-6 py-6 border-b border-[#E6EDF7]">
-        <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-[#DCE6F5]">
+      <div className="flex items-center gap-6 px-6 py-3">
+        {/* Brand */}
+        <div className="flex items-center gap-3 shrink-0">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold shadow-sm">
             S
           </div>
 
-          <div>
-            <h1 className="font-bold text-[#14213D] tracking-tight">
+          <div className="hidden sm:block">
+            <h1 className="font-bold text-[#14213D] tracking-tight leading-tight">
               SkillTrack
             </h1>
 
@@ -38,46 +39,40 @@ function Sidebar({ activePage, setActivePage }) {
             </p>
           </div>
         </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 flex items-center justify-end gap-1 overflow-x-auto py-1">
+          {navigation.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <NavLink
+                key={item.name}
+                to={item.path}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                    isActive
+                      ? "bg-[#EAF3FF] text-[#3478E5] shadow-sm"
+                      : "text-[#53627A] hover:bg-[#F4F8FF] hover:text-[#3478E5]"
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      size={18}
+                      strokeWidth={isActive ? 2.3 : 1.8}
+                    />
+
+                    <span>{item.name}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </nav>
       </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-1">
-        <p className="px-3 mb-3 text-[10px] font-semibold tracking-wider text-[#94A3B8] uppercase">
-          Workspace
-        </p>
-
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          const active = activePage === item.name;
-
-          return (
-            <button
-              key={item.name}
-              onClick={() => setActivePage(item.name)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                active
-                  ? "bg-[#EAF3FF] text-[#3478E5] shadow-sm"
-                  : "text-[#53627A] hover:bg-[#F4F8FF] hover:text-[#3478E5]"
-              }`}
-            >
-              <Icon
-                size={18}
-                strokeWidth={active ? 2.3 : 1.8}
-              />
-
-              <span>{item.name}</span>
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* Footer */}
-      <div className="px-6 py-5 border-t border-[#E6EDF7]">
-        <p className="text-[11px] text-[#94A3B8]">
-          SIH 2026 · PS 26135
-        </p>
-      </div>
-    </aside>
+    </header>
   );
 }
 

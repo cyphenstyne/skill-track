@@ -372,30 +372,6 @@ function Skills() {
         </div>
       </div>
 
-      {/* Source information */}
-      <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-5">
-        <div className="flex items-start gap-3">
-          <Award
-            className="text-blue-600 mt-0.5"
-            size={20}
-          />
-
-          <div>
-            <h3 className="font-semibold text-slate-900">
-              Skill data
-            </h3>
-
-            <p className="text-sm text-slate-600 mt-1">
-              Skills are associated with trainees through the{" "}
-              <span className="font-medium text-slate-800">
-                trainee_skills
-              </span>{" "}
-              relationship. Proficiency and source are recorded for
-              each trainee-skill association.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

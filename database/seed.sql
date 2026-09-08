@@ -276,6 +276,9 @@ FROM trainees t;
 -- CERTIFICATIONS
 -- ============================================================
 
+-- Derived from trainee_courses, which includes all trainees
+-- (learning records are visible regardless of tracking consent),
+-- so no separate consent filter is needed here.
 INSERT INTO certifications (
     trainee_id,
     course_id,
@@ -459,12 +462,17 @@ SELECT
 
 FROM trainees t
 
-WHERE t.id <= 1350;
+WHERE t.id <= 1350
+  AND t.consent_status = TRUE;
 
 
 -- ============================================================
 -- SALARY HISTORY
 -- ============================================================
+
+-- Both queries below derive from employment_records, which is
+-- already restricted to consenting trainees, so no separate
+-- consent filter is needed here.
 
 -- Starting salary
 INSERT INTO salary_history (
@@ -560,7 +568,9 @@ SELECT
         ELSE 'completed'
     END
 
-FROM trainees t;
+FROM trainees t
+
+WHERE t.consent_status = TRUE;
 
 
 -- Second follow-up
@@ -601,7 +611,9 @@ SELECT
         ELSE 'completed'
     END
 
-FROM trainees t;
+FROM trainees t
+
+WHERE t.consent_status = TRUE;
 
 
 -- ============================================================
@@ -622,4 +634,5 @@ SELECT
 
 FROM trainees t
 
-WHERE t.id > 1350;
+WHERE t.id > 1350
+  AND t.consent_status = TRUE;

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Users, Eye, CheckCircle2, XCircle } from "lucide-react";
 import { fetchApi } from "../api";
 import Pagination from "../components/Pagination";
 import { paginate, PAGE_SIZE } from "../utils/pagination";
 
-function Trainees({ onViewTrainee }) {
+function Trainees() {
+  const navigate = useNavigate();
   const [trainees, setTrainees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -81,6 +83,11 @@ function Trainees({ onViewTrainee }) {
   // (no server pagination), so slice here. Reset to page 1 on filter change.
   const { items: pagedTrainees, totalPages } = paginate(filteredTrainees, page, PAGE_SIZE);
 
+  const consentGranted = trainees.filter(
+    (trainee) => trainee.consentStatus ?? trainee.consent
+  ).length;
+  const consentNotGranted = trainees.length - consentGranted;
+
   return (
     <div className="space-y-8">
       {/* Heading */}
@@ -99,20 +106,58 @@ function Trainees({ onViewTrainee }) {
       </div>
 
       {/* Summary */}
-      <div className="bg-white border border-blue-100 rounded-2xl p-5 shadow-sm w-full md:w-72">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-slate-500">
-              Total Registered
-            </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white border border-blue-100 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-500">
+                Total Registered
+              </p>
 
-            <p className="text-3xl font-bold text-slate-900 mt-2">
-              {trainees.length}
-            </p>
+              <p className="text-3xl font-bold text-slate-900 mt-2">
+                {trainees.length}
+              </p>
+            </div>
+
+            <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Users size={22} />
+            </div>
           </div>
+        </div>
 
-          <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Users size={22} />
+        <div className="bg-white border border-blue-100 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-500">
+                Tracking Consent Given
+              </p>
+
+              <p className="text-3xl font-bold text-slate-900 mt-2">
+                {consentGranted}
+              </p>
+            </div>
+
+            <div className="w-11 h-11 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
+              <CheckCircle2 size={22} />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-blue-100 rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-500">
+                Tracking Consent Not Given
+              </p>
+
+              <p className="text-3xl font-bold text-slate-900 mt-2">
+                {consentNotGranted}
+              </p>
+            </div>
+
+            <div className="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+              <XCircle size={22} />
+            </div>
           </div>
         </div>
       </div>
@@ -190,7 +235,7 @@ function Trainees({ onViewTrainee }) {
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
-                  Consent
+                  Tracking Consent
                 </th>
 
                 <th className="text-left px-6 py-4 font-semibold text-slate-600">
@@ -242,7 +287,7 @@ function Trainees({ onViewTrainee }) {
 
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => onViewTrainee(trainee.id)}
+                        onClick={() => navigate(`/trainees/${trainee.id}`)}
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium transition"
                       >
                         <Eye size={16} />
