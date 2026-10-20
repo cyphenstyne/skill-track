@@ -11,6 +11,7 @@
 - dob (date picker)
 - contact number
 - email
+- highest educational qualification 
 - employeement status (yes/no)
 - type of employment
 - unemployment reason (if employeement status no)
@@ -33,6 +34,6 @@
 - landmark
 
 3. Course Provider:
+- id
 - courses list
-- trainees enrolled in each course
--  
+-   

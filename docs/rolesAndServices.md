@@ -4,19 +4,23 @@
 - can add/update course providers. [core service]
 - add/remove trainees. [core service]
 - access the admin dashboard. [core service]
-- all trainees data access(read only). [core service]
-- all course providers data access (read only). [core service]
+- all trainees data access(readonly). [core service]
+- all course providers data access (readonly). [core service]
 - stop email service for certain trainees. [email service]
 
 ## Course provider:
 - can add/remove/update courses. [core service]
 - can kick trainees. (must give a reason). [core service]
-- all trainees data access (read only). [core service]
+- all trainees data access (readonly). [core service]
 - suggestions on course improvement based on current market demand. [AI service]
 - chat bot for course providers, for further discussion. [AI service]
 
 ## Trainees:
-- view/modify their data. [core service]
+- add/modify/delete their information. [core service]
+- has list of skills, earned through completing courses that teaches those skills. [core service]
+- has certifications earned through completing courses. [core service]
+- has employment status, current role, current salary, and salary groth. [core service]
+- follow up history. [core service]
 - change consent status. [email/core service]
 - enrol or drop out of courses. (if dropping must give a reason) [core service]
 - upload resume, mention job role/title for skill gap analysis. [AI service]
@@ -59,4 +63,4 @@ AI tells you what kind of role is suitable for you based on your skills.
 - New course ideas.
 
 ## **Email service:**
-- Send and email in every 3 months to the trainees/users to fill/update information.
+- Send and email in every 3 months to the trainees/users to fill/update information.www.op
